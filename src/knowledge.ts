@@ -32,7 +32,7 @@ const knowledge: Entry[] = [
     keywords: ['café', 'cafe', 'coffee', 'wifi', 'wi-fi', 'work from', 'coworking', 'remote work', 'príncipe real', 'principe real', 'laptop', 'work remotely'],
     category: 'Cafés & Coworking',
     paragraphs: [
-      "Príncipe Real is a fantastic base for remote work. Copenhagen Coffee Lab on Rua da Rosa is a favorite — proper espresso, fast WiFi, and a calm upstairs area. The Mill, also on Rua da Rosa, has good coffee, plenty of power outlets, and a nomad-friendly vibe. Dear Breakfast does great brunch and solid connectivity, though it gets busy on weekends.",
+      "Príncipe Real is a fantastic base for remote work. Copenhagen Coffee Labs on Rua da Rosa is a favorite — proper espresso, fast WiFi, and a calm upstairs area. The Mill, also on Rua da Rosa, has good coffee, plenty of power outlets, and a nomad-friendly vibe. Dear Breakfast does great brunch and solid connectivity, though it gets busy on weekends.",
       "If you want a dedicated workspace, Heden Príncipe Real is right in the neighborhood with polished desks and meeting rooms. A short walk or tram ride away, Coworking Lisboa near Cais do Sodré and Second Home inside the Mercado da Ribeira building are both excellent for a change of scene.",
       "Practical tip: Portuguese cafés are relaxed about laptop use on weekdays, but many discourage it on weekends when locals come to socialize. Bring a Type F power adapter (Portugal uses the same two-pin round sockets as most of Europe) and order something every couple of hours if you're camping — it keeps the goodwill going.",
     ],
@@ -91,12 +91,21 @@ const knowledge: Entry[] = [
       "The nomad scene is big — meetups, language exchanges, and coworking spaces make it easy to build a community. Just know that central Lisbon gets crowded with tourists in summer, and some locals feel the strain of over-tourism, so being a respectful, engaged resident (not just a visitor) is genuinely appreciated.",
     ],
   },
+  {
+    keywords: ['crypto', 'web3', 'ethereum', 'bitcoin', 'btc', 'eth', 'nft', 'blockchain', 'wallet', 'metamask', 'token', 'defi', 'coin', 'usdc', 'usdt', 'stablecoin', 'pay with crypto', 'accept crypto', 'crypto payment'],
+    category: 'Crypto & Web3 in Lisbon',
+    paragraphs: [
+      "Lisbon has quietly become one of Europe's most exciting Web3 hubs. The community is active and welcoming — you'll find crypto meetups almost weekly, and big events like Lisbon Web3 Week (usually alongside Solana Breakpoint or ETHGlobal hackathons) draw builders from all over. Crypto-friendly cafés and coworking spots are scattered across Príncipe Real, Cais do Sodré, and LX Factory, where you'll overhear conversations about DeFi and NFTs over a galão.",
+      "For everyday crypto use, a handful of cafés and restaurants in central Lisbon accept crypto payments — mostly through apps like Utrust or direct wallet transfers. The LX Factory area has a few spots that are crypto-curious, and some coworking spaces like Heden and Second Home have Web3-focused members. For crypto ATMs, there are a couple near Rossio and in shopping centers like Colombo, though fees are high — you're better off using an exchange like Binance, Kraken, or Coinbase and transferring to a local bank.",
+      "If you're earning in crypto, the practical move is to convert to EUR for rent and daily expenses, since most landlords and shops don't accept crypto directly. Wise or Revolut are popular bridges. For taxes, Portugal has historically been crypto-friendly — crypto held for over 12 months is generally not taxed as capital gains, but rules evolve, so check the latest from the Autoridade Tributária (Portal das Finanças) or consult a Portuguese tax advisor who understands crypto.",
+    ],
+  },
 ];
 
 const fallback: BuddyResponse = {
   category: 'General Lisbon Advice',
   paragraphs: [
-    "That's a great question — Lisbon has a way of surprising you once you're here. I can help with neighborhoods, visas and the NIF, banking, cafés and coworking, transport, healthcare, housing, cost of living, and the general lifestyle. Tell me a bit more about your situation and I'll give you something specific and practical.",
+    "That's a great question — Lisbon has a way of surprising you once you're here. I can help with neighborhoods, visas and the NIF, banking, cafés and coworking, transport, healthcare, housing, cost of living, crypto and Web3, and the general lifestyle. Tell me a bit more about your situation and I'll give you something specific and practical.",
     "For example, are you already in Lisbon or still planning? Are you working remotely, studying, or retiring? And what matters most to you right now — finding a place to live, sorting paperwork, or just getting oriented in the city? The more context you share, the better I can tailor my advice.",
     "If it's something I'm not certain about — like a legal deadline or a fee that changes often — I'll say so and point you to the official source, like the AIMA site, Portal das Finanças, or the relevant consulate. Better to verify than guess when it comes to paperwork.",
   ],
