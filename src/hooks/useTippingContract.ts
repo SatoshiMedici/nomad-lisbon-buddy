@@ -41,7 +41,8 @@ export function useTippingContract(isConnected: boolean, address: string | null)
   const [tipError, setTipError] = useState<string | null>(null);
   const [lastTxHash, setLastTxHash] = useState<string | null>(null);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
-  const [isOwner, setIsOwner] = useState(false);
+  const [isRecipient, setIsRecipient] = useState(false);
+  const [recipientAddress, setRecipientAddress] = useState<string | null>(null);
   const [contractBalance, setContractBalance] = useState('0');
 
   useEffect(() => {
@@ -76,11 +77,13 @@ export function useTippingContract(isConnected: boolean, address: string | null)
       }
       setTips(newTips);
 
+      const recipient = await contract.recipient();
+      setRecipientAddress(recipient);
+
       if (address) {
         const premium = await contract.hasPremiumAccess(address);
         setHasPremium(premium);
-        const owner = await contract.owner();
-        setIsOwner(owner.toLowerCase() === address.toLowerCase());
+        setIsRecipient(recipient.toLowerCase() === address.toLowerCase());
       }
 
       const balance = await provider.getBalance(contractAddress);
@@ -200,7 +203,8 @@ export function useTippingContract(isConnected: boolean, address: string | null)
     sendTip,
     withdraw,
     isWithdrawing,
-    isOwner,
+    isRecipient,
+    recipientAddress,
     contractBalance,
   };
 }

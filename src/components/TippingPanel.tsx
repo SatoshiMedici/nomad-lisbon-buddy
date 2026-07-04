@@ -13,6 +13,8 @@ import {
   Info,
   AlertCircle,
   DollarSign,
+  User,
+  AlertTriangle,
 } from 'lucide-react';
 import type { Tip } from '../hooks/useTippingContract';
 import { shortenAddress } from '../hooks/useWallet';
@@ -32,8 +34,10 @@ type Props = {
   sendTip: (amountEth: string, message: string) => void;
   withdraw: () => void;
   isWithdrawing: boolean;
-  isOwner: boolean;
+  isRecipient: boolean;
+  recipientAddress: string | null;
   contractBalance: string;
+  networkWarning: string | null;
 };
 
 const premiumTips = [
@@ -67,6 +71,17 @@ function timeAgo(ts: number): string {
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
+function NetworkWarning({ warning }: { warning: string }) {
+  return (
+    <div className="flex items-start gap-2 p-3 rounded-xl bg-[var(--warning)]/10 border border-[var(--warning)]/30 mb-4">
+      <AlertTriangle className="w-4 h-4 text-[var(--warning)] flex-shrink-0 mt-0.5" />
+      <p className="text-xs text-[var(--warning)] font-medium leading-relaxed">
+        {warning}
+      </p>
+    </div>
+  );
+}
+
 function PremiumSection({ hasPremium }: { hasPremium: boolean }) {
   if (!hasPremium) {
     return (
@@ -78,7 +93,7 @@ function PremiumSection({ hasPremium }: { hasPremium: boolean }) {
           </span>
         </div>
         <p className="text-xs text-[var(--muted)] leading-relaxed">
-          Tip at least <strong className="text-[var(--accent)]">0.001 ETH</strong>{' '}
+          Tip at least <strong className="text-[var(--accent)]">0.1 0G</strong>{' '}
           to unlock exclusive local knowledge — hidden viewpoints, crowd-free
           timing, authentic eats, and local discount tricks that most tourists
           never find.
@@ -144,7 +159,7 @@ function TipsList({ tips }: { tips: Tip[] }) {
                 {shortenAddress(tip.sender)}
               </span>
               <span className="text-xs font-bold text-[var(--accent)] tabular-nums">
-                {parseFloat(tip.amount).toFixed(4)} ETH
+                {parseFloat(tip.amount).toFixed(4)} 0G
               </span>
             </div>
             {tip.message && (
@@ -164,7 +179,7 @@ function TipsList({ tips }: { tips: Tip[] }) {
 }
 
 export default function TippingPanel(props: Props) {
-  const [tipAmount, setTipAmount] = useState('0.001');
+  const [tipAmount, setTipAmount] = useState('0.1');
   const [tipMessage, setTipMessage] = useState('');
 
   const handleSendTip = () => {
@@ -188,7 +203,7 @@ export default function TippingPanel(props: Props) {
                 On-Chain Tipping
               </h3>
               <p className="text-xs text-[var(--muted)] mt-0.5">
-                Support the buddy with crypto
+                Tip in 0G tokens on 0G Network
               </p>
             </div>
           </div>
@@ -196,7 +211,7 @@ export default function TippingPanel(props: Props) {
             <Wallet className="w-5 h-5 text-[var(--muted)] flex-shrink-0" />
             <p className="text-sm text-[var(--muted)]">
               Connect your wallet to deploy the tipping contract and send tips
-              on-chain.
+              in 0G tokens on 0G Network mainnet.
             </p>
           </div>
         </div>
@@ -225,13 +240,26 @@ export default function TippingPanel(props: Props) {
             </div>
           </div>
 
+          {props.networkWarning && (
+            <NetworkWarning warning={props.networkWarning} />
+          )}
+
           <div className="flex items-start gap-3 p-4 rounded-xl bg-[var(--accent-glow)] mb-4">
             <Info className="w-4 h-4 text-[var(--accent)] flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-[var(--text)] leading-relaxed">
-              Deploying creates a real smart contract on your connected network.
-              You'll become the contract owner and can withdraw collected tips.
-              For testing, switch to a testnet like Sepolia in your wallet.
-            </p>
+            <div className="text-xs text-[var(--text)] leading-relaxed">
+              <p className="mb-2">
+                <strong>Deploying makes you the recipient.</strong> All tips
+                sent to this contract go directly to your wallet in 0G tokens.
+                Deploy once, then share the app — users tip you, and you
+                withdraw anytime.
+              </p>
+              <p>
+                This deploys on{' '}
+                <strong className="text-[var(--accent)]">0G Network mainnet</strong>{' '}
+                (Chain ID 16661). Make sure your wallet is connected to 0G
+                Network. Tips are sent in 0G tokens.
+              </p>
+            </div>
           </div>
 
           <button
@@ -247,7 +275,7 @@ export default function TippingPanel(props: Props) {
             ) : (
               <>
                 <ArrowUpRight className="w-4 h-4" />
-                Deploy Tipping Contract
+                Deploy — I'll Receive Tips
               </>
             )}
           </button>
@@ -269,7 +297,7 @@ export default function TippingPanel(props: Props) {
       style={{ animationDelay: '0.5s' }}
     >
       <div className="glass rounded-2xl p-6">
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <span className="w-10 h-10 rounded-xl bg-[var(--accent-glow)] flex items-center justify-center">
               <Activity className="w-5 h-5 text-[var(--accent)]" />
@@ -284,11 +312,39 @@ export default function TippingPanel(props: Props) {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1 text-xs font-semibold text-[var(--accent)] bg-[var(--accent-glow)] px-2.5 py-1 rounded-full">
+              0G Network
+            </span>
             <span className="flex items-center gap-1 text-xs font-semibold text-[var(--success)] bg-[var(--success)]/10 px-2.5 py-1 rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--success)]" />
               Live
             </span>
           </div>
+        </div>
+
+        {props.networkWarning && (
+          <NetworkWarning warning={props.networkWarning} />
+        )}
+
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-[var(--accent-glow)] mb-5">
+          <span className="flex-shrink-0 w-8 h-8 rounded-lg bg-[var(--accent)] flex items-center justify-center">
+            <User className="w-4 h-4 text-white" />
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-[var(--accent)]">
+              Tips go to
+            </p>
+            <p className="text-xs font-mono text-[var(--text)] truncate">
+              {props.recipientAddress
+                ? props.recipientAddress
+                : 'Loading…'}
+            </p>
+          </div>
+          {props.isRecipient && (
+            <span className="flex-shrink-0 text-xs font-bold text-[var(--success)] bg-[var(--success)]/10 px-2 py-1 rounded-lg">
+              You
+            </span>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3 mb-5">
@@ -307,21 +363,21 @@ export default function TippingPanel(props: Props) {
             <div className="flex items-center gap-1.5 mb-1">
               <DollarSign className="w-3.5 h-3.5 text-[var(--accent)]" />
               <span className="text-xs text-[var(--muted)] font-medium">
-                Contract Balance
+                Balance
               </span>
             </div>
             <span className="text-lg font-bold text-[var(--text)] tabular-nums">
-              {parseFloat(props.contractBalance).toFixed(4)} ETH
+              {parseFloat(props.contractBalance).toFixed(4)} 0G
             </span>
           </div>
         </div>
 
         <div className="rounded-xl border border-[var(--border)] p-4 mb-4">
           <label className="text-xs font-semibold text-[var(--text)] mb-2 block">
-            Tip Amount (ETH)
+            Tip Amount (0G)
           </label>
           <div className="flex gap-2 mb-3">
-            {['0.001', '0.005', '0.01'].map((amt) => (
+            {['0.1', '0.5', '1'].map((amt) => (
               <button
                 key={amt}
                 onClick={() => setTipAmount(amt)}
@@ -337,7 +393,7 @@ export default function TippingPanel(props: Props) {
           </div>
           <input
             type="number"
-            step="0.0001"
+            step="0.01"
             min="0"
             value={tipAmount}
             onChange={(e) => setTipAmount(e.target.value)}
@@ -368,7 +424,7 @@ export default function TippingPanel(props: Props) {
             ) : (
               <>
                 <ArrowUpRight className="w-4 h-4" />
-                Send {tipAmount} ETH Tip
+                Send {tipAmount} 0G Tip
               </>
             )}
           </button>
@@ -395,7 +451,7 @@ export default function TippingPanel(props: Props) {
           <TipsList tips={props.tips} />
         </div>
 
-        {props.isOwner && parseFloat(props.contractBalance) > 0 && (
+        {props.isRecipient && parseFloat(props.contractBalance) > 0 && (
           <button
             onClick={props.withdraw}
             disabled={props.isWithdrawing}
@@ -409,7 +465,7 @@ export default function TippingPanel(props: Props) {
             ) : (
               <>
                 <Shield className="w-4 h-4" />
-                Withdraw {parseFloat(props.contractBalance).toFixed(4)} ETH
+                Withdraw {parseFloat(props.contractBalance).toFixed(4)} 0G
               </>
             )}
           </button>

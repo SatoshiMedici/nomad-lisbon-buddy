@@ -110,8 +110,14 @@ export default function App() {
   const threadRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const { address, isConnected, connect, disconnect, error: walletError } =
-    useWallet();
+  const {
+    address,
+    isConnected,
+    connect,
+    disconnect,
+    error: walletError,
+    networkWarning,
+  } = useWallet();
   const { prices, loading: pricesLoading, lastUpdated } = useCryptoPrices();
   const tipping = useTippingContract(isConnected, address);
 
@@ -299,8 +305,10 @@ export default function App() {
           sendTip={tipping.sendTip}
           withdraw={tipping.withdraw}
           isWithdrawing={tipping.isWithdrawing}
-          isOwner={tipping.isOwner}
+          isRecipient={tipping.isRecipient}
+          recipientAddress={tipping.recipientAddress}
           contractBalance={tipping.contractBalance}
+          networkWarning={networkWarning}
         />
 
         <section

@@ -3,11 +3,13 @@ pragma solidity ^0.8.20;
 
 /// @title LisbonTipping
 /// @notice On-chain tipping contract for the Nomad Lisbon Buddy app.
-///         Users send ETH tips with optional messages. Tipping at least
-///         0.001 ETH unlocks premium local content (token-gating).
+///         Deployed on 0G Network mainnet. Tips are paid in 0G tokens
+///         (the native gas token). The deployer becomes the recipient —
+///         all tips go to them. Tipping at least 0.1 0G unlocks premium
+///         local content (token-gating).
 contract LisbonTipping {
-    address public owner;
-    uint256 public constant PREMIUM_THRESHOLD = 0.001 ether;
+    address public immutable recipient;
+    uint256 public constant PREMIUM_THRESHOLD = 0.1 ether;
 
     struct Tip {
         address sender;
@@ -20,13 +22,13 @@ contract LisbonTipping {
     mapping(address => uint256) public totalTippedBy;
 
     event TipSent(address indexed sender, uint256 amount, string message, uint256 timestamp);
-    event Withdrawn(address indexed owner, uint256 amount);
+    event Withdrawn(address indexed recipient, uint256 amount);
 
     constructor() {
-        owner = msg.sender;
+        recipient = msg.sender;
     }
 
-    /// @notice Send a tip with an optional message
+    /// @notice Send a tip in 0G tokens with an optional message
     function sendTip(string calldata message) external payable {
         require(msg.value > 0, "Tip must be greater than 0");
         tips.push(
@@ -62,13 +64,13 @@ contract LisbonTipping {
         return totalTippedBy[user] >= PREMIUM_THRESHOLD;
     }
 
-    /// @notice Withdraw all collected tips (owner only)
+    /// @notice Withdraw all collected 0G tokens (recipient only)
     function withdraw() external {
-        require(msg.sender == owner, "Only the owner can withdraw");
+        require(msg.sender == recipient, "Only recipient can withdraw");
         uint256 balance = address(this).balance;
         require(balance > 0, "No balance to withdraw");
-        (bool success, ) = owner.call{value: balance}("");
+        (bool success, ) = recipient.call{value: balance}("");
         require(success, "Withdrawal failed");
-        emit Withdrawn(owner, balance);
+        emit Withdrawn(recipient, balance);
     }
 }
