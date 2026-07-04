@@ -310,6 +310,7 @@ export default function App() {
           contractBalance={tipping.contractBalance}
           totalVolume={tipping.totalVolume}
           networkWarning={networkWarning}
+          clearContract={tipping.clearContract}
         />
 
         <section

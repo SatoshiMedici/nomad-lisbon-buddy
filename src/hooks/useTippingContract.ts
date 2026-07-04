@@ -197,6 +197,21 @@ export function useTippingContract(isConnected: boolean, address: string | null)
     }
   }, [contractAddress, refreshData]);
 
+  const clearContract = useCallback(() => {
+    localStorage.removeItem(STORAGE_KEY);
+    setContractAddress(null);
+    setTipCount(0);
+    setTips([]);
+    setHasPremium(false);
+    setIsRecipient(false);
+    setRecipientAddress(null);
+    setContractBalance('0');
+    setTotalVolume('0');
+    setDeployError(null);
+    setTipError(null);
+    setLastTxHash(null);
+  }, []);
+
   return {
     contractAddress,
     isDeploying,
@@ -215,5 +230,6 @@ export function useTippingContract(isConnected: boolean, address: string | null)
     recipientAddress,
     contractBalance,
     totalVolume,
+    clearContract,
   };
 }

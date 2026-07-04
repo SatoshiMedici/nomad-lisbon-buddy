@@ -15,6 +15,7 @@ import {
   Zap,
   User,
   AlertTriangle,
+  RotateCw,
 } from 'lucide-react';
 import type { Tip } from '../hooks/useTippingContract';
 import { shortenAddress } from '../hooks/useWallet';
@@ -39,6 +40,7 @@ type Props = {
   contractBalance: string;
   totalVolume: string;
   networkWarning: string | null;
+  clearContract: () => void;
 };
 
 const premiumTips = [
@@ -182,6 +184,7 @@ function TipsList({ tips }: { tips: Tip[] }) {
 export default function TippingPanel(props: Props) {
   const [tipAmount, setTipAmount] = useState('0.1');
   const [tipMessage, setTipMessage] = useState('');
+  const [showRedeployConfirm, setShowRedeployConfirm] = useState(false);
 
   const handleSendTip = () => {
     props.sendTip(tipAmount, tipMessage);
@@ -494,6 +497,49 @@ export default function TippingPanel(props: Props) {
             )}
           </button>
         )}
+
+        {/* Redeploy section */}
+        <div className="mt-5 pt-4 border-t border-[var(--border)]">
+          {!showRedeployConfirm ? (
+            <button
+              onClick={() => setShowRedeployConfirm(true)}
+              className="w-full flex items-center justify-center gap-2 py-2 text-xs font-medium text-[var(--muted)] hover:text-[var(--accent)] transition-colors"
+            >
+              <RotateCw className="w-3.5 h-3.5" />
+              Deploy new contract version
+            </button>
+          ) : (
+            <div className="rounded-xl bg-[var(--warning)]/10 border border-[var(--warning)]/30 p-4">
+              <div className="flex items-start gap-2 mb-3">
+                <AlertTriangle className="w-4 h-4 text-[var(--warning)] flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-[var(--text)] leading-relaxed">
+                  This will clear the current contract and let you deploy a
+                  fresh one. The old contract stays on-chain but the app will
+                  point to the new one. Only do this if you need to update the
+                  contract logic.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    props.clearContract();
+                    setShowRedeployConfirm(false);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[var(--warning)] text-white text-xs font-semibold hover:opacity-90 transition-opacity"
+                >
+                  <RotateCw className="w-3.5 h-3.5" />
+                  Clear & Redeploy
+                </button>
+                <button
+                  onClick={() => setShowRedeployConfirm(false)}
+                  className="flex-1 py-2 rounded-lg bg-[var(--bg)] text-[var(--muted)] text-xs font-semibold border border-[var(--border)] hover:text-[var(--text)] transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
         <PremiumSection hasPremium={props.hasPremium} />
       </div>
