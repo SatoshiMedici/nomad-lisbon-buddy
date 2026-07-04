@@ -12,7 +12,7 @@ import {
   RefreshCw,
   Info,
   AlertCircle,
-  DollarSign,
+  Zap,
   User,
   AlertTriangle,
 } from 'lucide-react';
@@ -37,6 +37,7 @@ type Props = {
   isRecipient: boolean;
   recipientAddress: string | null;
   contractBalance: string;
+  totalVolume: string;
   networkWarning: string | null;
 };
 
@@ -248,16 +249,29 @@ export default function TippingPanel(props: Props) {
             <Info className="w-4 h-4 text-[var(--accent)] flex-shrink-0 mt-0.5" />
             <div className="text-xs text-[var(--text)] leading-relaxed">
               <p className="mb-2">
-                <strong>Deploying makes you the recipient.</strong> All tips
-                sent to this contract go directly to your wallet in 0G tokens.
-                Deploy once, then share the app — users tip you, and you
-                withdraw anytime.
+                <strong>Tips go directly to the creator's wallet.</strong>{' '}
+                When users tip, 0G tokens are forwarded instantly to the
+                recipient address — no withdrawal needed.
               </p>
               <p>
                 This deploys on{' '}
                 <strong className="text-[var(--accent)]">0G Network mainnet</strong>{' '}
                 (Chain ID 16661). Make sure your wallet is connected to 0G
                 Network. Tips are sent in 0G tokens.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] mb-4">
+            <span className="flex-shrink-0 w-8 h-8 rounded-lg bg-[var(--accent)] flex items-center justify-center">
+              <User className="w-4 h-4 text-white" />
+            </span>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-[var(--accent)]">
+                Recipient (tips go here)
+              </p>
+              <p className="text-xs font-mono text-[var(--text)] truncate">
+                0xD53aC13c75038545F8265c4AfAe41Bcb77c158c8
               </p>
             </div>
           </div>
@@ -275,7 +289,7 @@ export default function TippingPanel(props: Props) {
             ) : (
               <>
                 <ArrowUpRight className="w-4 h-4" />
-                Deploy — I'll Receive Tips
+                Deploy Tipping Contract
               </>
             )}
           </button>
@@ -326,18 +340,27 @@ export default function TippingPanel(props: Props) {
           <NetworkWarning warning={props.networkWarning} />
         )}
 
+        {/* Direct transfer badge */}
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-[var(--success)]/10 border border-[var(--success)]/20 mb-4">
+          <Zap className="w-4 h-4 text-[var(--success)] flex-shrink-0" />
+          <p className="text-xs font-medium text-[var(--success)]">
+            Tips are forwarded directly to the creator's wallet — no withdrawal needed
+          </p>
+        </div>
+
+        {/* Recipient address */}
         <div className="flex items-center gap-3 p-3 rounded-xl bg-[var(--accent-glow)] mb-5">
           <span className="flex-shrink-0 w-8 h-8 rounded-lg bg-[var(--accent)] flex items-center justify-center">
             <User className="w-4 h-4 text-white" />
           </span>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-[var(--accent)]">
-              Tips go to
+              Tips go directly to
             </p>
             <p className="text-xs font-mono text-[var(--text)] truncate">
               {props.recipientAddress
                 ? props.recipientAddress
-                : 'Loading…'}
+                : '0xD53aC13c75038545F8265c4AfAe41Bcb77c158c8'}
             </p>
           </div>
           {props.isRecipient && (
@@ -361,13 +384,13 @@ export default function TippingPanel(props: Props) {
           </div>
           <div className="rounded-xl p-3 bg-[var(--bg)] border border-[var(--border)]">
             <div className="flex items-center gap-1.5 mb-1">
-              <DollarSign className="w-3.5 h-3.5 text-[var(--accent)]" />
+              <Zap className="w-3.5 h-3.5 text-[var(--accent)]" />
               <span className="text-xs text-[var(--muted)] font-medium">
-                Balance
+                Volume Forwarded
               </span>
             </div>
             <span className="text-lg font-bold text-[var(--text)] tabular-nums">
-              {parseFloat(props.contractBalance).toFixed(4)} 0G
+              {parseFloat(props.totalVolume).toFixed(4)} 0G
             </span>
           </div>
         </div>
@@ -451,6 +474,7 @@ export default function TippingPanel(props: Props) {
           <TipsList tips={props.tips} />
         </div>
 
+        {/* Safety net withdraw — only shows if somehow there's a stuck balance */}
         {props.isRecipient && parseFloat(props.contractBalance) > 0 && (
           <button
             onClick={props.withdraw}
@@ -465,7 +489,7 @@ export default function TippingPanel(props: Props) {
             ) : (
               <>
                 <Shield className="w-4 h-4" />
-                Withdraw {parseFloat(props.contractBalance).toFixed(4)} 0G
+                Recover {parseFloat(props.contractBalance).toFixed(4)} 0G
               </>
             )}
           </button>

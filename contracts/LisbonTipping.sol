@@ -4,12 +4,13 @@ pragma solidity ^0.8.20;
 /// @title LisbonTipping
 /// @notice On-chain tipping contract for the Nomad Lisbon Buddy app.
 ///         Deployed on 0G Network mainnet. Tips are paid in 0G tokens
-///         (the native gas token). The deployer becomes the recipient —
-///         all tips go to them. Tipping at least 0.1 0G unlocks premium
+///         and forwarded DIRECTLY to the recipient wallet immediately —
+///         no withdrawal needed. Tipping at least 0.1 0G unlocks premium
 ///         local content (token-gating).
 contract LisbonTipping {
     address public immutable recipient;
     uint256 public constant PREMIUM_THRESHOLD = 0.1 ether;
+    uint256 public totalVolume;
 
     struct Tip {
         address sender;
@@ -21,14 +22,15 @@ contract LisbonTipping {
     Tip[] public tips;
     mapping(address => uint256) public totalTippedBy;
 
-    event TipSent(address indexed sender, uint256 amount, string message, uint256 timestamp);
+    event TipSent(address indexed sender, uint256 amount, string message, uint256 timestamp, address indexed recipient);
     event Withdrawn(address indexed recipient, uint256 amount);
 
-    constructor() {
-        recipient = msg.sender;
+    constructor(address _recipient) {
+        require(_recipient != address(0), "Invalid recipient");
+        recipient = _recipient;
     }
 
-    /// @notice Send a tip in 0G tokens with an optional message
+    /// @notice Send a tip in 0G tokens — forwarded directly to recipient
     function sendTip(string calldata message) external payable {
         require(msg.value > 0, "Tip must be greater than 0");
         tips.push(
@@ -40,7 +42,12 @@ contract LisbonTipping {
             })
         );
         totalTippedBy[msg.sender] += msg.value;
-        emit TipSent(msg.sender, msg.value, message, block.timestamp);
+        totalVolume += msg.value;
+        emit TipSent(msg.sender, msg.value, message, block.timestamp, recipient);
+
+        // Forward tip directly to recipient wallet
+        (bool success, ) = recipient.call{value: msg.value}("");
+        require(success, "Tip forwarding failed");
     }
 
     /// @notice Total number of tips received
@@ -64,7 +71,7 @@ contract LisbonTipping {
         return totalTippedBy[user] >= PREMIUM_THRESHOLD;
     }
 
-    /// @notice Withdraw all collected 0G tokens (recipient only)
+    /// @notice Recover any stuck 0G tokens (recipient only, safety net)
     function withdraw() external {
         require(msg.sender == recipient, "Only recipient can withdraw");
         uint256 balance = address(this).balance;

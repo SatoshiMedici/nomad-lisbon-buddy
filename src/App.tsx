@@ -308,6 +308,7 @@ export default function App() {
           isRecipient={tipping.isRecipient}
           recipientAddress={tipping.recipientAddress}
           contractBalance={tipping.contractBalance}
+          totalVolume={tipping.totalVolume}
           networkWarning={networkWarning}
         />
 

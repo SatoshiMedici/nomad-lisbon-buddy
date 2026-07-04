@@ -4,6 +4,9 @@ import contractArtifact from '../contracts/LisbonTipping.json';
 
 const STORAGE_KEY = 'nlb_tipping_contract_address';
 
+// Tips are forwarded directly to this wallet — no withdrawal needed
+const RECIPIENT_ADDRESS = '0xD53aC13c75038545F8265c4AfAe41Bcb77c158c8';
+
 export type Tip = {
   sender: string;
   amount: string;
@@ -44,6 +47,7 @@ export function useTippingContract(isConnected: boolean, address: string | null)
   const [isRecipient, setIsRecipient] = useState(false);
   const [recipientAddress, setRecipientAddress] = useState<string | null>(null);
   const [contractBalance, setContractBalance] = useState('0');
+  const [totalVolume, setTotalVolume] = useState('0');
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -62,6 +66,9 @@ export function useTippingContract(isConnected: boolean, address: string | null)
       );
       const count = await contract.getTipCount();
       setTipCount(Number(count));
+
+      const volume = await contract.totalVolume();
+      setTotalVolume(ethers.formatEther(volume));
 
       const total = Number(count);
       const start = Math.max(0, total - 10);
@@ -125,7 +132,8 @@ export function useTippingContract(isConnected: boolean, address: string | null)
         contractArtifact.bytecode,
         signer
       );
-      const contract = await factory.deploy();
+      // Pass recipient address as constructor argument
+      const contract = await factory.deploy(RECIPIENT_ADDRESS);
       await contract.waitForDeployment();
       const addr = await contract.getAddress();
       setContractAddress(addr);
@@ -206,5 +214,6 @@ export function useTippingContract(isConnected: boolean, address: string | null)
     isRecipient,
     recipientAddress,
     contractBalance,
+    totalVolume,
   };
 }
