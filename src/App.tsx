@@ -16,8 +16,10 @@ import {
 import { generateResponse } from './knowledge';
 import { useWallet } from './hooks/useWallet';
 import { useCryptoPrices } from './hooks/useCryptoPrices';
+import { useTippingContract } from './hooks/useTippingContract';
 import WalletButton from './components/WalletButton';
 import CryptoCalculator from './components/CryptoCalculator';
+import TippingPanel from './components/TippingPanel';
 
 type Message = {
   id: number;
@@ -111,6 +113,7 @@ export default function App() {
   const { address, isConnected, connect, disconnect, error: walletError } =
     useWallet();
   const { prices, loading: pricesLoading, lastUpdated } = useCryptoPrices();
+  const tipping = useTippingContract(isConnected, address);
 
   useEffect(() => {
     if (threadRef.current) {
@@ -279,6 +282,25 @@ export default function App() {
           lastUpdated={lastUpdated}
           walletAddress={address}
           isConnected={isConnected}
+        />
+
+        <TippingPanel
+          isConnected={isConnected}
+          contractAddress={tipping.contractAddress}
+          isDeploying={tipping.isDeploying}
+          deployError={tipping.deployError}
+          deploy={tipping.deploy}
+          tipCount={tipping.tipCount}
+          tips={tipping.tips}
+          hasPremium={tipping.hasPremium}
+          isSendingTip={tipping.isSendingTip}
+          tipError={tipping.tipError}
+          lastTxHash={tipping.lastTxHash}
+          sendTip={tipping.sendTip}
+          withdraw={tipping.withdraw}
+          isWithdrawing={tipping.isWithdrawing}
+          isOwner={tipping.isOwner}
+          contractBalance={tipping.contractBalance}
         />
 
         <section
