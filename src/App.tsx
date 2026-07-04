@@ -119,7 +119,7 @@ export default function App() {
     networkWarning,
   } = useWallet();
   const { prices, loading: pricesLoading, lastUpdated } = useCryptoPrices();
-  const tipping = useTippingContract(isConnected, address);
+  const tipping = useTippingContract(address);
 
   useEffect(() => {
     if (threadRef.current) {

@@ -13,7 +13,7 @@ type PriceData = {
 };
 
 const CACHE_KEY = 'nlb_crypto_prices';
-const CACHE_DURATION = 5 * 60 * 1000;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 function loadCachedPrices(): { data: CryptoPrice; timestamp: number } | null {
   try {
@@ -24,7 +24,7 @@ function loadCachedPrices(): { data: CryptoPrice; timestamp: number } | null {
       return parsed;
     }
   } catch {
-    return null;
+    // ignore parse errors
   }
   return null;
 }
@@ -47,6 +47,7 @@ export function useCryptoPrices() {
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
 
   const fetchPrices = useCallback(async () => {
+    // Check cache first
     const cached = loadCachedPrices();
     if (cached) {
       setPrices(cached.data);
@@ -70,7 +71,8 @@ export function useCryptoPrices() {
       setPrices(newPrices);
       setLastUpdated(Date.now());
       saveCachedPrices(newPrices);
-    } catch {
+    } catch (err) {
+      // If fetch fails, try to use stale cache as fallback
       try {
         const raw = localStorage.getItem(CACHE_KEY);
         if (raw) {
@@ -88,6 +90,7 @@ export function useCryptoPrices() {
 
   useEffect(() => {
     fetchPrices();
+    // Refresh every 5 minutes
     const interval = setInterval(fetchPrices, CACHE_DURATION);
     return () => clearInterval(interval);
   }, [fetchPrices]);

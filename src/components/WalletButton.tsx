@@ -69,7 +69,7 @@ export default function WalletButton({
               onDisconnect();
               setShowMenu(false);
             }}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-[var(--error)] hover:bg-black/5 transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-[var(--error)] hover:bg-[var(--border)] transition-colors"
           >
             <X className="w-4 h-4" />
             Disconnect

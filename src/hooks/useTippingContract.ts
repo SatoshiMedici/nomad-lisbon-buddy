@@ -1,235 +1,93 @@
-import { useState, useEffect, useCallback } from 'react';
-import { ethers } from 'ethers';
-import contractArtifact from '../contracts/LisbonTipping.json';
+import { useState, useCallback } from 'react';
 
-const STORAGE_KEY = 'nlb_tipping_contract_address';
+export const RECIPIENT_ADDRESS = '0xD53aC13c75038545F8265c4AfAe41Bcb77c158c8';
 
-// Tips are forwarded directly to this wallet — no withdrawal needed
-const RECIPIENT_ADDRESS = '0xD53aC13c75038545F8265c4AfAe41Bcb77c158c8';
-
-export type Tip = {
-  sender: string;
-  amount: string;
-  message: string;
-  timestamp: number;
+type Eip1193Provider = {
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
 };
 
-type WindowWithEthereum = Window & { ethereum?: unknown };
-
-function getProvider(): ethers.BrowserProvider | null {
-  if (typeof window === 'undefined') return null;
-  const eth = (window as WindowWithEthereum).ethereum;
-  if (!eth) return null;
-  return new ethers.BrowserProvider(eth as never);
-}
-
-async function getSigner(): Promise<ethers.JsonRpcSigner | null> {
-  const provider = getProvider();
-  if (!provider) return null;
-  try {
-    return await provider.getSigner();
-  } catch {
-    return null;
+declare global {
+  interface Window {
+    ethereum?: Eip1193Provider;
   }
 }
 
-export function useTippingContract(isConnected: boolean, address: string | null) {
-  const [contractAddress, setContractAddress] = useState<string | null>(null);
-  const [isDeploying, setIsDeploying] = useState(false);
-  const [deployError, setDeployError] = useState<string | null>(null);
-  const [tipCount, setTipCount] = useState(0);
-  const [tips, setTips] = useState<Tip[]>([]);
-  const [hasPremium, setHasPremium] = useState(false);
-  const [isSendingTip, setIsSendingTip] = useState(false);
-  const [tipError, setTipError] = useState<string | null>(null);
-  const [lastTxHash, setLastTxHash] = useState<string | null>(null);
-  const [isWithdrawing, setIsWithdrawing] = useState(false);
-  const [isRecipient, setIsRecipient] = useState(false);
-  const [recipientAddress, setRecipientAddress] = useState<string | null>(null);
-  const [contractBalance, setContractBalance] = useState('0');
-  const [totalVolume, setTotalVolume] = useState('0');
+function toHexWei(amountEth: string): string {
+  const trimmed = amountEth.trim();
+  if (!trimmed || isNaN(Number(trimmed))) return '0x0';
+  const [whole = '0', frac = ''] = trimmed.split('.');
+  const fracPadded = (frac + '000000000000000000').slice(0, 18);
+  const weiStr = (whole + fracPadded).replace(/^0+/, '') || '0';
+  return '0x' + BigInt(weiStr).toString(16);
+}
 
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) setContractAddress(saved);
-  }, []);
+export type TipStatus = 'idle' | 'sending' | 'success' | 'error';
 
-  const refreshData = useCallback(async () => {
-    if (!contractAddress) return;
-    const provider = getProvider();
-    if (!provider) return;
-    try {
-      const contract = new ethers.Contract(
-        contractAddress,
-        contractArtifact.abi,
-        provider
-      );
-      const count = await contract.getTipCount();
-      setTipCount(Number(count));
-
-      const volume = await contract.totalVolume();
-      setTotalVolume(ethers.formatEther(volume));
-
-      const total = Number(count);
-      const start = Math.max(0, total - 10);
-      const newTips: Tip[] = [];
-      for (let i = total - 1; i >= start; i--) {
-        const tip = await contract.getTip(i);
-        newTips.push({
-          sender: tip[0],
-          amount: ethers.formatEther(tip[1]),
-          message: tip[2],
-          timestamp: Number(tip[3]),
-        });
-      }
-      setTips(newTips);
-
-      const recipient = await contract.recipient();
-      setRecipientAddress(recipient);
-
-      if (address) {
-        const premium = await contract.hasPremiumAccess(address);
-        setHasPremium(premium);
-        setIsRecipient(recipient.toLowerCase() === address.toLowerCase());
-      }
-
-      const balance = await provider.getBalance(contractAddress);
-      setContractBalance(ethers.formatEther(balance));
-    } catch {
-      // contract may not exist on this network — ignore
-    }
-  }, [contractAddress, address]);
-
-  useEffect(() => {
-    refreshData();
-    if (!contractAddress) return;
-    const provider = getProvider();
-    if (!provider) return;
-    const contract = new ethers.Contract(
-      contractAddress,
-      contractArtifact.abi,
-      provider
-    );
-    const onTip = () => refreshData();
-    contract.on('TipSent', onTip);
-    contract.on('Withdrawn', onTip);
-    return () => {
-      contract.removeAllListeners();
-    };
-  }, [refreshData, contractAddress]);
-
-  const deploy = useCallback(async () => {
-    const signer = await getSigner();
-    if (!signer) {
-      setDeployError('Wallet not connected');
-      return;
-    }
-    setIsDeploying(true);
-    setDeployError(null);
-    try {
-      const factory = new ethers.ContractFactory(
-        contractArtifact.abi,
-        contractArtifact.bytecode,
-        signer
-      );
-      // Pass recipient address as constructor argument
-      const contract = await factory.deploy(RECIPIENT_ADDRESS);
-      await contract.waitForDeployment();
-      const addr = await contract.getAddress();
-      setContractAddress(addr);
-      localStorage.setItem(STORAGE_KEY, addr);
-      refreshData();
-    } catch (err) {
-      setDeployError(err instanceof Error ? err.message : 'Deploy failed');
-    } finally {
-      setIsDeploying(false);
-    }
-  }, [refreshData]);
+export function useTippingContract(senderAddress: string | null) {
+  const [status, setStatus] = useState<TipStatus>('idle');
+  const [txHash, setTxHash] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const sendTip = useCallback(
-    async (amountEth: string, message: string) => {
-      const signer = await getSigner();
-      if (!signer || !contractAddress) {
-        setTipError('Wallet not connected or contract not deployed');
+    async (amountEth: string) => {
+      const provider = window.ethereum;
+      if (!provider) {
+        setError('No wallet found. Install MetaMask to send tips.');
+        setStatus('error');
         return;
       }
-      setIsSendingTip(true);
-      setTipError(null);
-      setLastTxHash(null);
+      if (!senderAddress) {
+        setError('Connect your wallet first.');
+        setStatus('error');
+        return;
+      }
+      const value = Number(amountEth);
+      if (!value || value <= 0) {
+        setError('Enter a valid tip amount.');
+        setStatus('error');
+        return;
+      }
+
+      setStatus('sending');
+      setError(null);
+      setTxHash(null);
+
       try {
-        const contract = new ethers.Contract(
-          contractAddress,
-          contractArtifact.abi,
-          signer
-        );
-        const tx = await contract.sendTip(message, {
-          value: ethers.parseEther(amountEth),
-        });
-        setLastTxHash(tx.hash);
-        await tx.wait();
-        refreshData();
+        const hash = (await provider.request({
+          method: 'eth_sendTransaction',
+          params: [
+            {
+              from: senderAddress,
+              to: RECIPIENT_ADDRESS,
+              value: toHexWei(amountEth),
+            },
+          ],
+        })) as string;
+        setTxHash(hash);
+        setStatus('success');
       } catch (err) {
-        setTipError(err instanceof Error ? err.message : 'Tip failed');
-      } finally {
-        setIsSendingTip(false);
+        const msg =
+          err instanceof Error ? err.message : 'Tip failed to send. Please try again.';
+        setError(msg);
+        setStatus('error');
       }
     },
-    [contractAddress, refreshData]
+    [senderAddress]
   );
 
-  const withdraw = useCallback(async () => {
-    const signer = await getSigner();
-    if (!signer || !contractAddress) return;
-    setIsWithdrawing(true);
-    try {
-      const contract = new ethers.Contract(
-        contractAddress,
-        contractArtifact.abi,
-        signer
-      );
-      const tx = await contract.withdraw();
-      await tx.wait();
-      refreshData();
-    } catch {
-      // ignore
-    } finally {
-      setIsWithdrawing(false);
-    }
-  }, [contractAddress, refreshData]);
-
-  const clearContract = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
-    setContractAddress(null);
-    setTipCount(0);
-    setTips([]);
-    setHasPremium(false);
-    setIsRecipient(false);
-    setRecipientAddress(null);
-    setContractBalance('0');
-    setTotalVolume('0');
-    setDeployError(null);
-    setTipError(null);
-    setLastTxHash(null);
+  const reset = useCallback(() => {
+    setStatus('idle');
+    setTxHash(null);
+    setError(null);
   }, []);
 
   return {
-    contractAddress,
-    isDeploying,
-    deployError,
-    deploy,
-    tipCount,
-    tips,
-    hasPremium,
-    isSendingTip,
-    tipError,
-    lastTxHash,
+    recipientAddress: RECIPIENT_ADDRESS,
     sendTip,
-    withdraw,
-    isWithdrawing,
-    isRecipient,
-    recipientAddress,
-    contractBalance,
-    totalVolume,
-    clearContract,
+    status,
+    isSending: status === 'sending',
+    txHash,
+    error,
+    reset,
   };
 }
